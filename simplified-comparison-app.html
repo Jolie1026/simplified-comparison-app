@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片对比应用</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #edf2ff;
+            --secondary: #f72585;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --radius: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 30px 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto 30px;
+            text-align: center;
+        }
+
+        .app-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .upload-box {
+            position: relative;
+        }
+
+        .upload-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: var(--radius);
+            padding: 30px 20px;
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            background-color: #f9fafb;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .upload-area i {
+            font-size: 2.5rem;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            border: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a56d4;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e91e79;
+            transform: translateY(-2px);
+        }
+
+        input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 0 auto;
+            display: block;
+            border-radius: var(--radius);
+            opacity: 0;
+            transition: var(--transition);
+            object-fit: contain;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .upload-area.has-image {
+            border: none;
+            padding: 0;
+            background-color: transparent;
+            min-height: 200px;
+        }
+
+        .upload-area.has-image .preview-img {
+            opacity: 1;
+        }
+
+        .upload-area.has-image .upload-placeholder {
+            display: none;
+        }
+
+        .upload-area.has-image .upload-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+            border-radius: var(--radius);
+        }
+
+        .upload-area.has-image:hover .upload-overlay {
+            opacity: 1;
+        }
+
+        .label-input {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .label-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .comparison-container {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .img-comp-img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .img-comp-img img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .img-comp-slider {
+            position: absolute;
+            z-index: 9;
+            cursor: ew-resize;
+            width: 44px;
+            height: 44px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            top: calc(50% - 22px);
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .img-comp-slider:before,
+        .img-comp-slider:after {
+            content: "";
+            position: absolute;
+            background-color: white;
+        }
+
+        .img-comp-slider:before {
+            width: 2px;
+            height: 22px;
+        }
+
+        .img-comp-slider:after {
+            width: 22px;
+            height: 2px;
+        }
+
+        .img-comp-overlay {
+            border-right: 3px solid white;
+        }
+
+        .control-panel {
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .color-pills {
+            display: flex;
+            gap: 8px;
+        }
+
+        .color-pill {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #ddd;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .color-pill:hover,
+        .color-pill.active {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .comp-label {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .left-label {
+            top: 15px;
+            left: 15px;
+        }
+
+        .right-label {
+            top: 15px;
+            right: 15px;
+        }
+
+        .gif-preview {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .gif-preview img {
+            width: 100%;
+            display: block;
+        }
+
+        .range-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .range-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 5px;
+            background: #d7dcdf;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            background: #3a56d4;
+            transform: scale(1.1);
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border: 0;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .range-value {
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+
+        .placeholder-content i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease forwards;
+            gap: 12px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .toast-success {
+            background-color: #ecfdf5;
+            border-left: 4px solid var(--success);
+        }
+
+        .toast-warning {
+            background-color: #fffbeb;
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast-error {
+            background-color: #fef2f2;
+            border-left: 4px solid var(--error);
+        }
+
+        .toast-info {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast-icon {
+            font-size: 1.25rem;
+        }
+
+        .toast-success .toast-icon {
+            color: var(--success);
+        }
+
+        .toast-warning .toast-icon {
+            color: var(--warning);
+        }
+
+        .toast-error .toast-icon {
+            color: var(--error);
+        }
+
+        .toast-info .toast-icon {
+            color: var(--primary);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-close {
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(67, 97, 238, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--gray);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .footer-links {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .footer-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            background-color: var(--primary-light);
+            padding: 20px;
+            border-radius: var(--radius);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .instructions h4 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 1.75rem;
+            }
+
+            .comparison-container {
+                height: 350px;
+            }
+
+            .control-panel {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .settings-group {
+                width: 100%;
+            }
+
+            .action-buttons {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loadingIndicator" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">处理中...</div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <header class="header">
+        <h1 class="app-title"><i class="fas fa-clone"></i> 图片对比应用</h1>
+        <p class="subtitle">快速创建交互式图片对比和动态GIF，用于展示"前后"变化、城市变迁、环境变化等</p>
+    </header>
+
+    <main class="container">
+        <div class="upload-grid">
+            <div class="upload-box">
+                <h3><i class="fas fa-arrow-left"></i> 图片 1 (左侧/之前)</h3>
+                <div class="upload-area" id="uploadArea1">
+                    <div class="upload-placeholder">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>点击或拖放图片到此处</p>
+                        <button type="button" class="btn btn-outline" id="selectBtn1">
+                            <i class="fas fa-image"></i> 选择图片
+                        </button>
+                    </div>
+                    <img src="" alt="图片预览" class="preview-img" id="previewImg1">
+                    <div class="upload-overlay">
+                        <button type="button" class="btn btn-outline" id="changeBtn1">
+                            <i class="fas fa-sync-alt"></i> 更换图片
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="fileInput1" accept="image/*">
+                <input type="text" id="labelInput1" class="label-input" placeholder="左侧图片标签 (例如: 2005年)">
+            </div>
+
+            <div class="upload-box">
+                <h3><i class="fas fa-arrow-right"></i> 图片 2 (右侧/之后)</h3>
+                <div class="upload-area" id="uploadArea2">
+                    <div class="upload-placeholder">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>点击或拖放图片到此处</p>
+                        <button type="button" class="btn btn-outline" id="selectBtn2">
+                            <i class="fas fa-image"></i> 选择图片
+                        </button>
+                    </div>
+                    <img src="" alt="图片预览" class="preview-img" id="previewImg2">
+                    <div class="upload-overlay">
+                        <button type="button" class="btn btn-outline" id="changeBtn2">
+                            <i class="fas fa-sync-alt"></i> 更换图片
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="fileInput2" accept="image/*">
+                <input type="text" id="labelInput2" class="label-input" placeholder="右侧图片标签 (例如: 2023年)">
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="slider">
+                <i class="fas fa-sliders-h"></i> 交互式滑块
+            </button>
+            <button class="tab" data-tab="gif">
+                <i class="fas fa-film"></i> 动态GIF
+            </button>
+        </div>
+
+        <div class="tab-content active" id="slider-tab">
+            <div class="comparison-container" id="sliderContainer">
+                <div class="placeholder-content">
+                    <i class="fas fa-images"></i>
+                    <h3>上传两张图片以创建交互式对比</h3>
+                    <p>拖动滑块可以直观地比较两张图片的差异</p>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="settings-group">
+                    <div class="settings-item">
+                        <label class="switch">
+                            <input type="checkbox" id="showLabelsSwitch" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <span>显示标签</span>
+                    </div>
+
+                    <div class="settings-item">
+                        <span>标签颜色：</span>
+                        <div class="color-pills">
+                            <div class="color-pill active" data-bg="rgba(0, 0, 0, 0.7)" data-text="white" style="background-color: rgba(0, 0, 0, 0.7);"></div>
+                            <div class="color-pill" data-bg="rgba(255, 255, 255, 0.7)" data-text="black" style="background-color: rgba(255, 255, 255, 0.7);"></div>
+                            <div class="color-pill" data-bg="rgba(67, 97, 238, 0.7)" data-text="white" style="background-color: rgba(67, 97, 238, 0.7);"></div>
+                            <div class="color-pill" data-bg="rgba(247, 37, 133, 0.7)" data-text="white" style="background-color: rgba(247, 37, 133, 0.7);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-primary" id="updateSlider">
+                        <i class="fas fa-sync-alt"></i> 更新预览
+                    </button>
+                    <a href="#" class="btn btn-secondary" id="downloadSlider" style="display: none;">
+                        <i class="fas fa-download"></i> 下载HTML
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="gif-tab">
+            <div class="gif-preview" id="gifPreview">
+                <div class="placeholder-content">
+                    <i class="fas fa-film"></i>
+                    <h3>上传两张图片以创建动态GIF</h3>
+                    <p>自动创建在两张图片之间平滑切换的动画</p>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="settings-group">
+                    <div class="range-control">
+                        <span>过渡速度：</span>
+                        <input type="range" class="range-slider" id="transitionSpeed" min="500" max="3000" step="100" value="1000">
+                        <span class="range-value" id="speedValue">1.0秒</span>
+                    </div>
+
+                    <div class="settings-item">
+                        <label class="switch">
+                            <input type="checkbox" id="showGifLabelsSwitch" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <span>显示标签</span>
+                    </div>
+
+                    <div class="settings-item">
+                        <span>标签颜色：</span>
+                        <div class="color-pills">
+                            <div class="color-pill active" data-bg="rgba(0, 0, 0, 0.7)" data-text="white" style="background-color: rgba(0, 0, 0, 0.7);"></div>
+                            <div class="color-pill" data-bg="rgba(255, 255, 255, 0.7)" data-text="black" style="background-color: rgba(255, 255, 255, 0.7);"></div>
+                            <div class="color-pill" data-bg="rgba(67, 97, 238, 0.7)" data-text="white" style="background-color: rgba(67, 97, 238, 0.7);"></div>
+                            <div class="color-pill" data-bg="rgba(247, 37, 133, 0.7)" data-text="white" style="background-color: rgba(247, 37, 133, 0.7);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-primary" id="generateGif">
+                        <i class="fas fa-magic"></i> 生成GIF
+                    </button>
+                    <a href="#" class="btn btn-secondary" id="downloadGif" style="display: none;">
+                        <i class="fas fa-download"></i> 下载GIF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2025 图片对比应用 | 本地使用版</p>
+        <p>高效展示"前后"对比 | 适用于城市变迁、环境变化、历史对比等</p>
+        
+        <div class="instructions">
+            <h4><i class="fas fa-info-circle"></i> 使用说明</h4>
+            <ol>
+                <li>上传两张<strong>相同大小</strong>的图片（前后、左右对比）</li>
+                <li>为每张图片添加可选标签（如：2005年、2023年）</li>
+                <li>在"交互式滑块"或"动态GIF"模式中预览效果</li>
+                <li>根据需要调整设置（标签颜色、过渡速度）</li>
+                <li>下载您的作品并用于演示、社交媒体或网站</li>
+            </ol>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <script>
+        // 全局变量
+        let image1Url = null;
+        let image2Url = null;
+        let image1Obj = null;
+        let image2Obj = null;
+        let labelBgColor = 'rgba(0, 0, 0, 0.7)';
+        let labelTextColor = 'white';
+        let gifLabelBgColor = 'rgba(0, 0, 0, 0.7)';
+        let gifLabelTextColor = 'white';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM 元素引用
+            const fileInput1 = document.getElementById('fileInput1');
+            const fileInput2 = document.getElementById('fileInput2');
+            const uploadArea1 = document.getElementById('uploadArea1');
+            const uploadArea2 = document.getElementById('uploadArea2');
+            const previewImg1 = document.getElementById('previewImg1');
+            const previewImg2 = document.getElementById('previewImg2');
+            const selectBtn1 = document.getElementById('selectBtn1');
+            const selectBtn2 = document.getElementById('selectBtn2');
+            const changeBtn1 = document.getElementById('changeBtn1');
+            const changeBtn2 = document.getElementById('changeBtn2');
+            const labelInput1 = document.getElementById('labelInput1');
+            const labelInput2 = document.getElementById('labelInput2');
+            const sliderContainer = document.getElementById('sliderContainer');
+            const updateSlider = document.getElementById('updateSlider');
+            const downloadSlider = document.getElementById('downloadSlider');
+            const gifPreview = document.getElementById('gifPreview');
+            const transitionSpeed = document.getElementById('transitionSpeed');
+            const speedValue = document.getElementById('speedValue');
+            const generateGif = document.getElementById('generateGif');
+            const downloadGif = document.getElementById('downloadGif');
+            const showLabelsSwitch = document.getElementById('showLabelsSwitch');
+            const showGifLabelsSwitch = document.getElementById('showGifLabelsSwitch');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // 文件上传区域点击处理
+            uploadArea1.addEventListener('click', function() {
+                fileInput1.click();
+            });
+            
+            uploadArea2.addEventListener('click', function() {
+                fileInput2.click();
+            });
+            
+            // 按钮点击事件处理
+            selectBtn1.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput1.click();
+            });
+            
+            selectBtn2.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput2.click();
+            });
+            
+            changeBtn1.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput1.click();
+            });
+            
+            changeBtn2.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                fileInput2.click();
+            });
+            
+            // 文件输入处理
+            fileInput1.addEventListener('change', function() {
+                handleFile(this, previewImg1, uploadArea1, 1);
+            });
+            
+            fileInput2.addEventListener('change', function() {
+                handleFile(this, previewImg2, uploadArea2, 2);
+            });
+            
+            // 处理文件上传
+            function handleFile(input, preview, area, imageNumber) {
+                const file = input.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        if (imageNumber === 1) {
+                            image1Url = e.target.result;
+                            image1Obj = img;
+                        } else {
+                            image2Url = e.target.result;
+                            image2Obj = img;
+                        }
+                        
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        area.classList.add('has-image');
+                        
+                        showToast('图片上传成功', 'success');
+                    };
+                    
+                    img.src = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // 拖放处理
+            [uploadArea1, uploadArea2].forEach((area, index) => {
+                area.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.remove('dragover');
+                });
+                
+                area.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.remove('dragover');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length) {
+                        const fileInput = index === 0 ? fileInput1 : fileInput2;
+                        const preview = index === 0 ? previewImg1 : previewImg2;
+                        
+                        // 创建一个新的文件列表
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(files[0]);
+                        fileInput.files = dataTransfer.files;
+                        
+                        handleFile(fileInput, preview, this, index + 1);
+                    }
+                });
+            });
+            
+            // 更新滑块按钮事件
+            updateSlider.addEventListener('click', function() {
+                if (!image1Url || !image2Url) {
+                    showToast('请先上传两张图片', 'warning');
+                    return;
+                }
+                createImageSlider();
+            });
+            
+            // 切换标签显示
+            showLabelsSwitch.addEventListener('change', function() {
+                if (image1Url && image2Url) {
+                    createImageSlider();
+                }
+            });
+            
+            // 标签颜色选择器
+            const colorPills = document.querySelectorAll('.color-pills .color-pill');
+            colorPills.forEach(pill => {
+                pill.addEventListener('click', function() {
+                    const parent = this.closest('.color-pills');
+                    parent.querySelectorAll('.color-pill').forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const bg = this.getAttribute('data-bg');
+                    const text = this.getAttribute('data-text');
+                    
+                    if (parent.closest('#slider-tab')) {
+                        labelBgColor = bg;
+                        labelTextColor = text;
+                        if (image1Url && image2Url) {
+                            createImageSlider();
+                        }
+                    } else {
+                        gifLabelBgColor = bg;
+                        gifLabelTextColor = text;
+                    }
+                });
+            });
+            
+            // 创建图片对比滑块
+            function createImageSlider() {
+                sliderContainer.innerHTML = '';
+                
+                const container = document.createElement('div');
+                container.className = 'img-comp-container';
+                container.style.position = 'relative';
+                container.style.height = '100%';
+                
+                const imgRight = document.createElement('div');
+                imgRight.className = 'img-comp-img';
+                const rightImg = document.createElement('img');
+                rightImg.src = image2Url;
+                imgRight.appendChild(rightImg);
+                
+                const imgLeft = document.createElement('div');
+                imgLeft.className = 'img-comp-img img-comp-overlay';
+                imgLeft.style.width = '50%'; // 设置初始宽度为50%
+                
+                // 更新左侧图片的容器样式，使用clip来隐藏而不是缩放
+                imgLeft.style.overflow = 'hidden';
+                imgLeft.style.position = 'absolute';
+                imgLeft.style.left = '0';
+                imgLeft.style.top = '0';
+                imgLeft.style.bottom = '0';
+                
+                const leftImg = document.createElement('img');
+                leftImg.src = image1Url;
+                
+                // 修改左侧图片样式，确保图片不缩放，而是根据容器宽度裁剪
+                leftImg.style.height = '100%';
+                leftImg.style.width = rightImg.offsetWidth + 'px'; // 确保左右图片相同宽度
+                leftImg.style.maxWidth = 'none'; // 防止最大宽度限制
+                leftImg.style.position = 'absolute';
+                leftImg.style.top = '0';
+                leftImg.style.left = '0';
+                
+                imgLeft.appendChild(leftImg);
+                
+                const slider = document.createElement('div');
+                slider.className = 'img-comp-slider';
+                slider.style.left = '50%'; // 设置初始位置为50%
+                
+                if (showLabelsSwitch.checked) {
+                    const label1Text = labelInput1.value || '之前';
+                    const label2Text = labelInput2.value || '之后';
+                    
+                    const leftLabel = document.createElement('div');
+                    leftLabel.className = 'comp-label left-label';
+                    leftLabel.textContent = label1Text;
+                    leftLabel.style.backgroundColor = labelBgColor;
+                    leftLabel.style.color = labelTextColor;
+                    
+                    const rightLabel = document.createElement('div');
+                    rightLabel.className = 'comp-label right-label';
+                    rightLabel.textContent = label2Text;
+                    rightLabel.style.backgroundColor = labelBgColor;
+                    rightLabel.style.color = labelTextColor;
+                    
+                    container.appendChild(leftLabel);
+                    container.appendChild(rightLabel);
+                }
+                
+                container.appendChild(imgRight);
+                container.appendChild(imgLeft);
+                container.appendChild(slider);
+                sliderContainer.appendChild(container);
+                
+                // 等待图片加载完成后再初始化滑块，确保正确的尺寸
+                if (rightImg.complete && leftImg.complete) {
+                    // 确保右侧图片和左侧图片保持相同的宽高比
+                    leftImg.style.width = rightImg.offsetWidth + 'px';
+                    initSliderEvents(slider, imgLeft);
+                } else {
+                    Promise.all([
+                        new Promise(resolve => { rightImg.onload = resolve; }),
+                        new Promise(resolve => { leftImg.onload = resolve; })
+                    ]).then(() => {
+                        // 确保右侧图片和左侧图片保持相同的宽高比
+                        leftImg.style.width = rightImg.offsetWidth + 'px';
+                        initSliderEvents(slider, imgLeft);
+                    });
+                }
+                
+                downloadSlider.style.display = 'inline-flex';
+            }
+            
+            // 初始化滑块事件
+            function initSliderEvents(slider, overlay) {
+                let isDragging = false;
+                
+                slider.addEventListener('mousedown', startDragging);
+                slider.addEventListener('touchstart', startDragging);
+                
+                function startDragging(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('touchmove', drag);
+                    document.addEventListener('mouseup', stopDragging);
+                    document.addEventListener('touchend', stopDragging);
+                }
+                
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    const rect = sliderContainer.getBoundingClientRect();
+                    let pos = e.type === 'touchmove' ? 
+                        e.touches[0].clientX - rect.left : 
+                        e.clientX - rect.left;
+                    
+                    // 确保位置在容器范围内
+                    pos = Math.max(0, Math.min(pos, rect.width));
+                    
+                    // 计算百分比并应用到滑块位置和左侧图片宽度
+                    const percentage = (pos / rect.width) * 100;
+                    overlay.style.width = percentage + '%';
+                    slider.style.left = percentage + '%';
+                }
+                
+                function stopDragging() {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('touchmove', drag);
+                    document.removeEventListener('mouseup', stopDragging);
+                    document.removeEventListener('touchend', stopDragging);
+                }
+            }
+            
+            // Toast 提示功能
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                    type === 'warning' ? 'exclamation-triangle' : 
+                                    type === 'error' ? 'times-circle' : 'info-circle'} toast-icon"></i>
+                    <div class="toast-content">${message}</div>
+                    <i class="fas fa-times toast-close"></i>
+                `;
+                
+                document.getElementById('toastContainer').appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+                
+                toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
+            }
+            
+            // 切换标签页
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const target = this.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    document.getElementById(`${target}-tab`).classList.add('active');
+                });
+            });
+            
+            // 生成GIF按钮事件
+            generateGif.addEventListener('click', function() {
+                if (!image1Url || !image2Url) {
+                    showToast('请先上传两张图片', 'warning');
+                    return;
+                }
+                // GIF生成逻辑将在这里实现
+                showToast('GIF功能将在未来更新中提供', 'info');
+            });
+            
+            // 过渡速度滑块
+            transitionSpeed.addEventListener('input', function() {
+                const value = this.value / 1000;
+                speedValue.textContent = value.toFixed(1) + '秒';
+            });
+            
+            // 下载HTML按钮
+            downloadSlider.addEventListener('click', function(e) {
+                e.preventDefault();
+                showToast('导出功能将在未来更新中提供', 'info');
+            });
+        });
+    </script>
+</body>
+</html>
